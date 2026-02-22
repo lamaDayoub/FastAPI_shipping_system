@@ -6,7 +6,7 @@ connection = sqlite3.connect('sqlit.db')
 
 #curdor to excute the sql lanaguage commands
 cursor = connection.cursor()
-
+#1 creating a table
 cursor.execute(
     """
     CREATE TABLE IF NOT EXISTS shipment(
@@ -17,11 +17,26 @@ cursor.execute(
     )
     """
 )
+#2 adding a row
+# cursor.execute("""
+#     INSERT INTO shipment VALUES(
+#         12702,'desktop',10,'placed'
+#     )
+# """)
+# connection.commit()
+
+#3 selecting from the table
+
 cursor.execute("""
-    INSERT INTO shipment VALUES(
-        12702,'desktop',10,'placed'
-    )
+    SELECT * FROM shipment                            
 """)
-connection.commit()
+result = cursor.fetchmany(2)
+print(result)
+
+cursor.execute("""
+    SELECT * FROM shipment  WHERE id=12701                          
+""")
+result2 = cursor.fetchone()
+print(result2)
 #Close the connection when done
 connection.close()
