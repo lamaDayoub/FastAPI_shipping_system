@@ -12,7 +12,7 @@ class ShipmentStatus(str, Enum):
 class BaseShipment(BaseModel):
     content: str
     weight: float = Field(le=25)
-    destination: int
+    
 
 
 class ShipmentRead(BaseShipment):

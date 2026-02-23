@@ -1,31 +1,33 @@
-from multiprocessing import connection
+
 import sqlite3
-from schemas import ShipmentCreate,ShipmentUpdate
+from .schemas import ShipmentCreate,ShipmentUpdate
 from typing import Any
 class Database():
     def __init__(self):
         #Make the Connection
-        self.conn = sqlite3.connect('sqlit.db')
+        self.conn = sqlite3.connect('sqlit.db',check_same_thread=False)
         #curdor to excute the sql lanaguage commands
         self.cur =self. conn.cursor()
-        self.create_tabe('shipment')
+        self.create_table()
                 
-    def create_tabe(self,name:str):
+    def create_table(self):
         self.cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS ?(
+            CREATE TABLE IF NOT EXISTS shipment(
                 id INT PRIMARY KEY,
                 content TEXT,
                 weight REAL,
                 status TEXT
             )
-            """,(name,)
+            """
         )
         
     def create(self, shipment : ShipmentCreate):
         self.cur.execute("SELECT MAX(id) FROM shipment")
         result = self.cur.fetchone()
-        new_id = result[0] +1
+        last_id = result[0] if result[0] is not None else -1
+        new_id = last_id + 1
+        
         self.cur.execute("""
             INSERT INTO shipment VALUES(
                 :id, :content , :weight , :status
@@ -52,7 +54,7 @@ class Database():
             "status":row[3]
         } if row else None
 
-    def update(self, shipment:ShipmentUpdate)-> dict[str,Any]:
+    def update(self,id: int , shipment:ShipmentUpdate)-> dict[str,Any]:
         
         self.cur.execute("""
             UPDATE shipment SET status = :status
