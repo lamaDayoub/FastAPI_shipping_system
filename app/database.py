@@ -9,6 +9,11 @@ class Database():
         #curdor to excute the sql lanaguage commands
         self.cur =self. conn.cursor()
         self.create_table()
+        
+    def connect_to_db(self):
+        self.conn = sqlite3.connect('sqlit.db',check_same_thread=False)
+        #curdor to excute the sql lanaguage commands
+        self.cur =self. conn.cursor()
                 
     def create_table(self):
         self.cur.execute(
@@ -75,8 +80,24 @@ class Database():
         
     def close(self):
         self.conn.close()
+        
+    def __enter__(self):
+        print('into inter\n')
+        self.connect_to_db()
+        self.create_table()
+        return self
+    
+    def __exit__(self, *arg):
+        print('into exit\n')
+        self.close()
+       
+        
 
 
 
-
+with Database() as db:
+    print(db.get(12701))
+    print(db.get(12702))
+    
+    
 
