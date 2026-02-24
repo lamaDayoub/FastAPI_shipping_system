@@ -2,6 +2,7 @@
 import sqlite3
 from .schemas import ShipmentCreate,ShipmentUpdate
 from typing import Any
+from contextlib import contextmanager
 class Database():
     def __init__(self):
         #Make the Connection
@@ -81,21 +82,31 @@ class Database():
     def close(self):
         self.conn.close()
         
-    def __enter__(self):
-        print('into inter\n')
-        self.connect_to_db()
-        self.create_table()
-        return self
+    # def __enter__(self):
+    #     print('into inter\n')
+    #     self.connect_to_db()
+    #     self.create_table()
+    #     return self
     
-    def __exit__(self, *arg):
-        print('into exit\n')
-        self.close()
-       
+    # def __exit__(self, *arg):
+    #     print('into exit\n')
+    #     self.close()
+   
+@contextmanager 
+def managed_db():
+    db=Database()
+    print('entering\n')
+    db.connect_to_db()
+    db.create_table()
+        
+    yield db
+    print('exiting')
+    db.close()
         
 
 
 
-with Database() as db:
+with managed_db() as db:
     print(db.get(12701))
     print(db.get(12702))
     
