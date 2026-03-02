@@ -1,8 +1,6 @@
-from typing import Annotated
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine,AsyncSession
-from sqlmodel import SQLModel,Session 
+from sqlmodel import SQLModel
 from app.config import settings
 from sqlalchemy.orm import sessionmaker
 engine = create_async_engine(
@@ -13,8 +11,8 @@ engine = create_async_engine(
 )
 
 async def create_db_tables():
-    async with engine.begine() as connection:
-        from app.schemas import Shipment
+    async with engine.begin() as connection:
+        from app.api.schemas.shipment import Shipment
         await connection.run_sync(
             SQLModel.metadata.create_all
         )
@@ -32,4 +30,3 @@ async def get_session():
     async with async_session( ) as session:
         yield session
     
-SessionDep = Annotated[AsyncSession, Depends(get_session)]

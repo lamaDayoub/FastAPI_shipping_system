@@ -4,7 +4,7 @@ import sqlite3
 from typing import Any
 from contextlib import contextmanager
 
-from app.schemas.shipment import ShipmentCreate, ShipmentUpdate
+from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
 class Database():
     def __init__(self):
         #Make the Connection

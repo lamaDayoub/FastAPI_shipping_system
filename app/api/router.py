@@ -1,20 +1,17 @@
-from datetime import datetime, timedelta
-
 from fastapi import APIRouter, HTTPException, status
+from app.api.dependencies import ServiceDep
 
-from app.database.models import ShipmentStatus
-from app.database.session import SessionDep
-from app.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
-from app.services.shipment import ShipmentService
+from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
+
 
 router = APIRouter()
 
 
 ###  a shipment by id
 @router.get("/shipment", response_model=Shipment)
-async def get_shipment(id: int, session:SessionDep):
+async def get_shipment(id: int, service : ServiceDep):
     # Check for shipment with given id
-    shipment= ShipmentService(session).get(id)
+    shipment= await service.get(id)
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -26,15 +23,15 @@ async def get_shipment(id: int, session:SessionDep):
 
 
 @router.post("/shipment")
-async def submit_shipment(shipment: ShipmentCreate,session:SessionDep) -> Shipment:
-    return await ShipmentService(session).add(shipment)
+async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep) -> Shipment:
+    return await service.add(shipment)
     
 
 
 ### Update fields of a shipment
 @router.patch("/shipment", response_model=Shipment)
-async def update_shipment(id: int, updated_shipment: ShipmentUpdate,session:SessionDep):
-    shipment = await ShipmentService(session).get(id)
+async def update_shipment(id: int, updated_shipment: ShipmentUpdate,service : ServiceDep):
+    shipment = await service.get(id)
     
     if shipment is None:
         raise HTTPException(
@@ -47,19 +44,19 @@ async def update_shipment(id: int, updated_shipment: ShipmentUpdate,session:Sess
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='No Data provided to update'
         )
-    updated_ship= await ShipmentService(session).update(id,updating)
+    updated_ship= await service.update(id,updating)
     return updated_ship
 
 
 ### Delete a shipment by id
 @router.delete("/shipment")
-async def delete_shipment(id: int,session:SessionDep) -> dict[str, str]:
-    shipment=await ShipmentService(session).get(id)
+async def delete_shipment(id: int,service : ServiceDep) -> dict[str, str]:
+    shipment=await service.get(id)
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail= 'the shipment with the provided id is not exist'
         )
-    await ShipmentService(session).delete(id)
+    await service.delete(id)
     
     return {"detail": f"Shipment with id #{id} is deleted!"}

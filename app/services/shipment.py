@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from app.database.models import ShipmentStatus
 
-from app.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
+from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ShipmentService():
@@ -24,7 +24,7 @@ class ShipmentService():
     
         return new_shipment
     
-    async def update(self, id: int ,shipment_update: ShipmentUpdate)->Shipment:
+    async def update(self, id: int ,shipment_update: dict)->Shipment:
         shipment = await self.get(id)
         shipment.sqlmodel_update(shipment_update)
 
