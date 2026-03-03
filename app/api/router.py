@@ -4,11 +4,11 @@ from app.api.dependencies import ServiceDep
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
 
 
-router = APIRouter()
+router = APIRouter(prefix='/shipment', tags=['Shipment'])
 
 
 ###  a shipment by id
-@router.get("/shipment", response_model=Shipment)
+@router.get("/", response_model=Shipment)
 async def get_shipment(id: int, service : ServiceDep):
     # Check for shipment with given id
     shipment= await service.get(id)
@@ -22,14 +22,13 @@ async def get_shipment(id: int, service : ServiceDep):
 
 
 
-@router.post("/shipment")
-async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep) -> Shipment:
+@router.post("/")
+async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep   ) -> Shipment:
     return await service.add(shipment)
-    
 
 
 ### Update fields of a shipment
-@router.patch("/shipment", response_model=Shipment)
+@router.patch("/", response_model=Shipment)
 async def update_shipment(id: int, updated_shipment: ShipmentUpdate,service : ServiceDep):
     shipment = await service.get(id)
     
@@ -49,7 +48,7 @@ async def update_shipment(id: int, updated_shipment: ShipmentUpdate,service : Se
 
 
 ### Delete a shipment by id
-@router.delete("/shipment")
+@router.delete("/")
 async def delete_shipment(id: int,service : ServiceDep) -> dict[str, str]:
     shipment=await service.get(id)
     if shipment is None:
