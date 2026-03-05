@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.schemas.seller import SellerCreate
 from app.database.models import Seller
 from passlib.context import CryptContext
-from app.config import security_settings
+
+from app.utils import generate_access_token
+
 
 
 password_context = CryptContext(
@@ -45,17 +47,13 @@ class SellerService():
         if not true_password:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid password')
         
-        token = jwt.encode(
-            payload={
+        token = generate_access_token(
+            data={
                 "user":{
                     'name':seller.name,
-                    'email':seller.email
-                },
-                "exp": datetime.now()+timedelta(days = 1)
-            },
-            algorithm =security_settings.JWT_ALGORITHM,
-            key = security_settings.JWT_SECRET_KEY
-            
+                    'email': seller.email    
+                } 
+            }
         )
         return token
         

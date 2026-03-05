@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.dependencies import SellerServiceDep
 from app.api.schemas.seller import SellerRead, SellerCreate
 from app.core.security import oauth2_scheme
+from app.utils import decode_access_token
 
 
 router = APIRouter(prefix='/seller', tags=['Seller'])
@@ -28,6 +29,10 @@ async def login_seller(
     
 @router.get('/dashboard')
 async def get_dashboard(token: Annotated[str,Depends(oauth2_scheme)]):
-    return{
-        'token':token
+    data= decode_access_token(token)
+    if data is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid access token')
+    return {
+        'details': 'successfully Authenticated!'
     }
+
