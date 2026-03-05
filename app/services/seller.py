@@ -37,6 +37,7 @@ class SellerService():
          select(Seller).where(Seller.email == email)
         )
         seller = result.scalar()
+        
         if  seller is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='seller with given email is not found ')
         
@@ -51,7 +52,7 @@ class SellerService():
             data={
                 "user":{
                     'name':seller.name,
-                    'email': seller.email    
+                    'id': seller.id    
                 } 
             }
         )
