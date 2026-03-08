@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, status
 from app.api.dependencies import ServiceDep
 
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
-
+from app.api.dependencies import sellerDep
 
 router = APIRouter(prefix='/shipment', tags=['Shipment'])
 
 
 ###  a shipment by id
 @router.get("/", response_model=Shipment)
-async def get_shipment(id: int, service : ServiceDep):
+async def get_shipment(id: int, _:sellerDep, service : ServiceDep):
     # Check for shipment with given id
     shipment= await service.get(id)
     if shipment is None:
@@ -23,7 +23,7 @@ async def get_shipment(id: int, service : ServiceDep):
 
 
 @router.post("/")
-async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep   ) -> Shipment:
+async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep  , seller:sellerDep ) -> Shipment:
     return await service.add(shipment)
 
 

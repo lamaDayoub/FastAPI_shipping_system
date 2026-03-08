@@ -6,7 +6,7 @@ from app.api.dependencies import SellerServiceDep, SessionDep
 from app.api.schemas.seller import SellerRead, SellerCreate
 from app.core.security import oauth2_scheme
 from app.database.models import Seller
-from app.utils import decode_access_token
+
 
 
 router = APIRouter(prefix='/seller', tags=['Seller'])
@@ -28,15 +28,6 @@ async def login_seller(
         "token_type": "bearer"
     }
     
-@router.get('/dashboard')
-async def get_dashboard(token: Annotated[str,Depends(oauth2_scheme)],session:SessionDep):
-    data= decode_access_token(token)
-    if data is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid access token')
-    seller = await session.get(Seller,data['user']['id'])
-    if seller is None:
-         raise HTTPException(status_code=404, detail='User no longer exists')
-         
-    return seller
+
    
 
