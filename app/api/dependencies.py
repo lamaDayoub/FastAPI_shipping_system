@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from app.database.models import Seller
 from app.database.redis import is_jti_blacklisted
@@ -32,6 +33,6 @@ async def get_access_token(token:Annotated[str,Depends(oauth2_scheme)])->dict:
 async def get_current_seller(token : Annotated[str,Depends(get_access_token)],
                              session:SessionDep
 ):
-    return  await session.get(Seller,token['user']['id'])
+    return  await session.get(Seller,UUID(token['user']['id']))
 
 sellerDep = Annotated[Seller,Depends(get_current_seller)]
