@@ -48,3 +48,4 @@ class Seller(SQLModel, table= True):
         back_populates ="seller",
         sa_relationship_kwargs={"lazy":"selectin"}
     )
+    address: int
