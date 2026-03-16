@@ -14,3 +14,4 @@ class SellerRead(BaseSeller):
 class SellerCreate(BaseSeller):
     
     password: str
+    address:int

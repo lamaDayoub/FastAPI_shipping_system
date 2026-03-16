@@ -1,23 +1,21 @@
-from typing import List
-
-from pydantic import BaseModel, EmailStr
-
+from pydantic import BaseModel, EmailStr, Field
 
 
 class BaseDeliveryPartner(BaseModel):
-    name:str
-    email:EmailStr
-    max_handling_capacity : int
-    serviceable_zib_codes : List[int]
-    
+    name: str
+    email: EmailStr
+    serviceable_zib_codes: list[int] 
+    max_handling_capacity: int
+
+
 class DeliveryPartnerRead(BaseDeliveryPartner):
     pass
 
 
 class DeliveryPartnerUpdate(BaseModel):
-    max_handling_capacity : int
-    serviceable_zib_codes : List[int]
+    serviceable_zib_codes: list[int] | None = Field(default=None)
+    max_handling_capacity: int | None = Field(default=None)
+
 
 class DeliveryPartnerCreate(BaseDeliveryPartner):
-    
     password: str

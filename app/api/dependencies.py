@@ -6,6 +6,7 @@ from app.database.redis import is_jti_blacklisted
 from app.database.session import get_session
 from app.services.seller import SellerService
 from app.services.shipment import ShipmentService
+from app.services.delivery_partner import DeliveryPartnerService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import oauth2_scheme_seller, oauth2_scheme_partner
 from app.utils import decode_access_token
@@ -14,7 +15,7 @@ from app.utils import decode_access_token
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 def get_shipment_service(session : SessionDep):
-    return ShipmentService(session)
+    return ShipmentService(session, DeliveryPartnerService(session))
 
 ServiceDep = Annotated[ShipmentService, Depends(get_shipment_service)]
 
@@ -61,3 +62,12 @@ async def get_current_partner(token : Annotated[str,Depends(get_partner_access_t
     return partner
 
 DeleviryPartnerDep = Annotated[DeliveryPartner,Depends(get_current_partner)]
+
+
+def get_delivery_partner_service(session:SessionDep):
+    return DeliveryPartnerService(session)
+
+DeliveryPartnerServiceDep = Annotated[
+    DeliveryPartnerService,
+    Depends(get_delivery_partner_service)
+]

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
-from app.api.dependencies import ServiceDep
+from app.api.dependencies import DeliveryPartnerServiceDep, ServiceDep
 
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
 from app.api.dependencies import sellerDep
@@ -31,7 +31,12 @@ async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep  , selle
 
 ### Update fields of a shipment
 @router.patch("/", response_model=Shipment)
-async def update_shipment(id: int, updated_shipment: ShipmentUpdate,service : ServiceDep):
+async def update_shipment(
+    id: UUID, 
+    updated_shipment: ShipmentUpdate,
+    partner:DeliveryPartnerServiceDep,
+    service : ServiceDep
+):
     shipment = await service.get(id)
     
     if shipment is None:
@@ -51,7 +56,7 @@ async def update_shipment(id: int, updated_shipment: ShipmentUpdate,service : Se
 
 ### Delete a shipment by id
 @router.delete("/")
-async def delete_shipment(id: int,service : ServiceDep) -> dict[str, str]:
+async def delete_shipment(id: UUID,service : ServiceDep) -> dict[str, str]:
     shipment=await service.get(id)
     if shipment is None:
         raise HTTPException(
