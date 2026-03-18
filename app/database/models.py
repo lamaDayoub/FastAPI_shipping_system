@@ -12,6 +12,7 @@ class ShipmentStatus(str, Enum):
     in_transit = "in_transit"
     out_for_delivery = "out_for_delivery"
     delivered = "delivered"
+    cancled ="cancled"
 
 class Shipment (SQLModel, table =True): 
     __tablename__='shipment'
@@ -26,7 +27,7 @@ class Shipment (SQLModel, table =True):
     content: str
     weight: float = Field(le=25)
     destenation: int
-    status: ShipmentStatus
+    
     estimated_delivery: datetime
     seller_id : UUID = Field(foreign_key = "seller.id")
     created_at: datetime = Field(
@@ -43,6 +44,43 @@ class Shipment (SQLModel, table =True):
     delivery_partner : "DeliveryPartner" = Relationship(
         back_populates="shipments",
         sa_relationship_kwargs={"lazy":"selectin"}
+    )
+    timeline :List["ShipmentEvent"]=Relationship(
+        back_populates="shipment",
+        sa_relationship_kwargs={"lazy":"selectin"}
+    )
+    @property
+    def status(self):
+        if not self.timeline:
+            return None
+    
+        sorted_timeline = sorted(self.timeline, key=lambda event: event.created_at)
+        return sorted_timeline[-1].status
+    
+       
+class ShipmentEvent(SQLModel, table = True):
+    __tablename__='shipments_event'
+    id: UUID = Field(
+        sa_column = Column(
+            postgresql.UUID(),
+            default = uuid4,
+            primary_key = True,
+        )
+    )
+    created_at: datetime = Field(
+        sa_column= Column(
+            postgresql.TIMESTAMP,
+            default = datetime.now,
+        )
+    )
+    location:int 
+    status: ShipmentStatus
+    description : str| None =Field(default= None)
+    shipment_id : UUID = Field(foreign_key='shipment.id')
+    shipment :Shipment =Relationship(
+        back_populates="timeline",
+        sa_relationship_kwargs={"lazy":"selectin"}
+        
     )
     
 class User(SQLModel):
@@ -69,7 +107,8 @@ class Seller(User, table= True):
         back_populates ="seller",
         sa_relationship_kwargs={"lazy":"selectin"}
     )
-    address: int
+    address: str | None = Field(default=None)
+    zip_code :int | None = Field(default=None)
     
 class DeliveryPartner(User, table= True):
     __tablename__='delivery_partner'
@@ -100,7 +139,7 @@ class DeliveryPartner(User, table= True):
         return [
             shipment 
             for shipment in shipments_list
-            if shipment.status != ShipmentStatus.delivered
+            if shipment.status != ShipmentStatus.delivered or shipment.status != ShipmentStatus.cancled 
         ]
     @property  
     def current_handling_capacity(self):

@@ -1,8 +1,9 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
-from app.api.dependencies import DeliveryPartnerServiceDep, ServiceDep
+from app.api.dependencies import DeleviryPartnerDep, DeliveryPartnerServiceDep, ServiceDep
 
+from app.api.schemas import shipment
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
 from app.api.dependencies import sellerDep
 
@@ -34,35 +35,33 @@ async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep  , selle
 async def update_shipment(
     id: UUID, 
     updated_shipment: ShipmentUpdate,
-    partner:DeliveryPartnerServiceDep,
+    partner:DeleviryPartnerDep,
     service : ServiceDep
 ):
-    shipment = await service.get(id)
-    
-    if shipment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail = 'the shipment with the provided id id not exsist'
-        )
+   
     updating = updated_shipment.model_dump(exclude_none = True)
     if not updating:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='No Data provided to update'
         )
-    updated_ship= await service.update(id,updating)
+    updated_ship= await service.update(id, updated_shipment, partner )
     return updated_ship
 
 
 ### Delete a shipment by id
-@router.delete("/")
-async def delete_shipment(id: UUID,service : ServiceDep) -> dict[str, str]:
+@router.get("/cancel", response_model =Shipment)
+async def cancel_shipment(
+    id: UUID,
+    seller: sellerDep,
+    service : ServiceDep
+) -> dict[str, str]:
     shipment=await service.get(id)
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail= 'the shipment with the provided id is not exist'
         )
-    await service.delete(id)
+    return await service.cancel(id, seller)
     
-    return {"detail": f"Shipment with id #{id} is deleted!"}
+    

@@ -9,13 +9,18 @@ from app.services.shipment import ShipmentService
 from app.services.delivery_partner import DeliveryPartnerService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import oauth2_scheme_seller, oauth2_scheme_partner
+from app.services.shipment_event import ShipmentEventService
 from app.utils import decode_access_token
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 def get_shipment_service(session : SessionDep):
-    return ShipmentService(session, DeliveryPartnerService(session))
+    return ShipmentService(
+        session,
+        DeliveryPartnerService(session),
+        ShipmentEventService(session)
+    )
 
 ServiceDep = Annotated[ShipmentService, Depends(get_shipment_service)]
 
