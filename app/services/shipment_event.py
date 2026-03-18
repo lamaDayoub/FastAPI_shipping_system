@@ -6,9 +6,10 @@ from app.services.notification import NotificationService
 
 
 class ShipmentEventService(BaseService):
-    def __init__(self,session ):
+    def __init__(self,session ,tasks):
         super().__init__(ShipmentEvent, session)
-        self.notification_service = NotificationService()
+        self.notification_service = NotificationService(tasks)
+        
         
     async def add(
         self,
