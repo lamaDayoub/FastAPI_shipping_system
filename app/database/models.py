@@ -49,6 +49,9 @@ class Shipment (SQLModel, table =True):
         back_populates="shipment",
         sa_relationship_kwargs={"lazy":"selectin"}
     )
+    client_contact_email :EmailStr | None
+    client_contact_phone: int | None
+    
     @property
     def status(self):
         if not self.timeline:

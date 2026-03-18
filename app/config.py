@@ -1,3 +1,4 @@
+from annotated_types import Not
 from pydantic_settings import BaseSettings,SettingsConfigDict
 
 
@@ -28,5 +29,21 @@ class SecuritySettings(BaseSettings):
     
     model_config = _base_config
     
+    
+class NotificationSettings(BaseSettings):
+    MAIL_USERNAME: str
+    MAIL_PASSWORD : str
+    MAIL_FROM : str
+    MAIL_FROM_NAME : str
+    MAIL_SERVER : str
+    MAIL_PORT : int
+    MAIL_STARTTLS : bool =True
+    MAIL_SSL_TLS: bool =False
+    USE_CREDENTIALS : bool =True
+    VALIDATE_CERTS: bool =True
+    
+    model_config = _base_config
+    
 db_settings = DataBaseSettings()
 security_settings = SecuritySettings()
+notification_settings = NotificationSettings()
