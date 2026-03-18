@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from uuid import uuid4
 
 from app.config import security_settings
@@ -31,3 +32,6 @@ def decode_access_token(token) -> dict | None :
     except jwt.PyJWTError :
         return None
         
+        
+APP_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = APP_DIR/"templates"
