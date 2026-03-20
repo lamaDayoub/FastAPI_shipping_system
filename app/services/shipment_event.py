@@ -84,6 +84,7 @@ class ShipmentEventService(BaseService):
             case ShipmentStatus.placed:
                 subject="Your Order is Shipped 🚛"
                 context["seller"] = shipment.seller.name
+                context["id"] = shipment.id
                 context["partner"] = shipment.delivery_partner.name
                 template_name="mail_placed.html"
 

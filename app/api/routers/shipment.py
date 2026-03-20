@@ -1,16 +1,19 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from app.api.dependencies import DeleviryPartnerDep, DeliveryPartnerServiceDep, ServiceDep
 
 from app.api.schemas import shipment
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
 from app.api.dependencies import sellerDep
+from app.utils import TEMPLATE_DIR
 
 router = APIRouter(prefix='/shipment', tags=['Shipment'])
+templates = Jinja2Templates(TEMPLATE_DIR)
 
-
-###  a shipment by id
+###  a shipment by id add:, _:sellerDep
 @router.get("/", response_model=Shipment)
 async def get_shipment(id: UUID, _:sellerDep, service : ServiceDep):
     # Check for shipment with given id
@@ -23,11 +26,27 @@ async def get_shipment(id: UUID, _:sellerDep, service : ServiceDep):
 
     return shipment
 
-
+#TRACKING DETAILS OF A SHIPMENT
+@router.get("/track")
+async def get_tracking(request: Request, id:UUID,  service : ServiceDep ):
+    shipment = await service.get(id)
+    context = shipment.model_dump()
+    context["status"]= shipment.status
+    context["partner"]= shipment.delivery_partner.name
+    context["timeline"]= shipment.timeline
+    context["timeline"].reverse()
+    
+    return templates.TemplateResponse(
+        request = request,
+        name = "track.html",
+        context=context
+        
+    )
 
 @router.post("/")
 async def submit_shipment(shipment: ShipmentCreate,service : ServiceDep  , seller:sellerDep ) -> Shipment:
     return await service.add(shipment, seller )
+
 
 
 ### Update fields of a shipment
