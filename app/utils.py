@@ -41,14 +41,16 @@ def decode_access_token(token) -> dict | None :
 APP_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = APP_DIR/"templates"
 
-def generate_url_safe_token(data:dict)->str:
-    return _serializer.dumps(data)
+def generate_url_safe_token(data:dict, salt:str |None =None)->str:
+    return _serializer.dumps(data, salt = salt)
 
-def decode_url_safe_token(token : str, expiry: timedelta |None =None)->dict |None:
+def decode_url_safe_token(token : str, salt : str|None = None, expiry: timedelta |None =None)->dict |None:
     try:
+        max_age_seconds = int(expiry.total_seconds()) if expiry else None
         return _serializer.loads(
         token,
-        max_age=expiry if expiry else None
+        salt = salt,
+        max_age=max_age_seconds
         )
     except(BadSignature, SignatureExpired):
         return None
