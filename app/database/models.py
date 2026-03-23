@@ -1,3 +1,4 @@
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
 from typing import List
@@ -90,6 +91,7 @@ class User(SQLModel):
     name:str
     email:EmailStr
     password_hash: str
+    email_verified :bool = Field(default = False)
     
 class Seller(User, table= True):
     __tablename__='seller'

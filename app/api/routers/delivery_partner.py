@@ -59,3 +59,8 @@ async def update_delivery_partner(
     # 2. Now 'partner' is updated, so we save it and return the actual object
     return await service.update(partner)
     
+    
+@router.get('/verify')
+async def verify_partner_email(token : str, service :DeliveryPartnerServiceDep):
+    await service.verify_email(token)
+    return {"detail": "Account verified!"}

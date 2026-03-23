@@ -7,6 +7,11 @@ _base_config = SettingsConfigDict(
     env_ignore_empty=True,
     extra='ignore'
 )
+
+class AppSettings(BaseSettings):
+    APP_NAME: str = "FastAhip"
+    APP_DOMAIN: str ="localhost:8000"
+
 class DataBaseSettings(BaseSettings):
     POSTGRES_SERVER: str
     POSTGRES_USER: str
@@ -43,7 +48,8 @@ class NotificationSettings(BaseSettings):
     VALIDATE_CERTS: bool =True
     
     model_config = _base_config
-    
+
+app_settings = AppSettings()
 db_settings = DataBaseSettings()
 security_settings = SecuritySettings()
 notification_settings = NotificationSettings()

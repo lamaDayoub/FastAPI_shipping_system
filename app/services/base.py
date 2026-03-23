@@ -3,6 +3,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel
 
+from app.services.notification import NotificationService
+
 
 
 class BaseService:

@@ -5,7 +5,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
 
 from app.config import notification_settings
-from app.services.base import BaseService
+
 from app.utils import TEMPLATE_DIR
 
 

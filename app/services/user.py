@@ -1,12 +1,15 @@
-from fastapi import HTTPException, status
+from uuid import UUID
+
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlmodel import select
 from app.database.models import User
 from app.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.utils import generate_access_token
+from app.services.notification import NotificationService
+from app.utils import generate_access_token, generate_url_safe_token
 from passlib.context import CryptContext
-
-
+from app.config import app_settings
+from app.utils import decode_url_safe_token
 
 password_context = CryptContext(
     schemes=['bcrypt']
@@ -14,16 +17,32 @@ password_context = CryptContext(
 
 
 class UserService(BaseService):
-    def __init__(self, model: User , session: AsyncSession):
+    def __init__(self, model: User , session: AsyncSession, tasks:BackgroundTasks):
         super().__init__(model, session)
+        self.notification_service = NotificationService(tasks)
         
-    async def _add_user(self, data:dict):
+    async def _add_user(self, data:dict, router_prefix: str)-> User:
         user_data = data.model_dump(exclude={'password'})
         user = self.model(
             **user_data,
             password_hash = password_context.hash(data.password) # Access .password directly
         )
-        return await self._add(user)
+        user = await self._add(user)
+        token = generate_url_safe_token({
+            "email":user.email,
+            "id":str(user.id)
+        })
+        await self.notification_service.send_email_with_template(
+            recipients=[user.email],
+            subject="Verify your Account with FastShip",
+            context = {
+                "username":user.name,
+                "verification_url":f'http://{app_settings.APP_DOMAIN}/{router_prefix}/verify?token={token}'
+            },
+            template_name='mail_email_verify.html'
+        )
+        
+        return user
     
     
     async def _get_by_email(self, email)-> User | None:
@@ -43,7 +62,11 @@ class UserService(BaseService):
         )
         if not true_password:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid password')
-        
+        if not user.email_verified:
+            raise HTTPException(
+                status_code = status.HTTP_401_UNAUTHORIZED,
+                detail ="Email not verified"
+            )
         return generate_access_token(
             data={
                 "user":{
@@ -52,5 +75,15 @@ class UserService(BaseService):
                 } 
             }
         )
+    async def verify_email(self, token: str):
+        token_data= decode_url_safe_token(token)
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token"
+            )
+        user = await self._get(UUID(token_data["id"]))
+        user.email_verified = True
+        await self._update(user)
         
         
