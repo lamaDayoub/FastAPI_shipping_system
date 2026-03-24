@@ -2,5 +2,10 @@
     <p>Our deliver executive is on his way to deliver your shipment. Please ensure you are available at the delivery
         location and answer to rider's incoming call.</p>
     <br>
+    {% if verification_code %}
+    <p>
+        share this {{verification_code}} with your delivery excutive to recieve your package
+    </p>
+    {% endif %}
     <p>Powered by FastShip</p>
 </body>

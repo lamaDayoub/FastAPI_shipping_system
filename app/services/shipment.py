@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
 from app.database.models import DeliveryPartner, Seller, Shipment, ShipmentStatus
+from app.database.redis import get_shipment_verification_code
 from app.services.base import BaseService
 from app.services.delivery_partner import DeliveryPartnerService
 from app.services.shipment_event import ShipmentEventService
@@ -49,37 +50,60 @@ class ShipmentService(BaseService):
         return shipment
         
         
-
-    # Update an existing shipment
     async def update(
         self,
         id: UUID,
         shipment_update: ShipmentUpdate,
         partner: DeliveryPartner
     ) -> Shipment:
+        # 1. Fetch the shipment
         shipment = await self.get(id)
-    
+
         if shipment is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail = 'the shipment with the provided id id not exsist'
+                detail='The shipment with the provided ID does not exist'
             )
-        if shipment.delivery_partner_id != partner.id :
+
+        # 2. Authorization: Check if this partner owns this shipment
+        if shipment.delivery_partner_id != partner.id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Not authorized'
+                detail='Not authorized to update this shipment'
             )
-        update = shipment_update.model_dump(exclude_none= True)
+
+        # 3. VERIFICATION CHECK: If status is 'delivered', we MUST check Redis
+        if shipment_update.status == ShipmentStatus.delivered:
+            # We fetch the code stored in Redis DB 1
+            stored_code = await get_shipment_verification_code(shipment.id)
+            
+            # Compare stored code with the one provided in the request body
+            if str(stored_code) != str(shipment_update.verification_code):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid verification code. Client not authorized to receive."
+                )
+            print(f"DEBUG: Verification successful for shipment {shipment.id}")
+
+        # 4. Prepare data for the ShipmentEvent (Status/Location)
+        event_data = shipment_update.model_dump(
+            exclude_none=True,
+            exclude=["verification_code", "estimated_delivery"]
+        )
+
+        # 5. Update main Shipment fields (Estimated Delivery)
         if shipment_update.estimated_delivery:
             shipment.estimated_delivery = shipment_update.estimated_delivery
-        if len(update) >1 or not shipment_update.estimated_delivery: 
+
+        # 6. Create the Timeline Event (This triggers _notify / Redis SET / SMS)
+        if event_data: 
             await self.event_service.add(
-                shipment= shipment,
-                **update     
+                shipment=shipment,
+                **event_data     
             )
             
+        # 7. Final Commit to Database
         return await self._update(shipment)
-        
 
     # Delete a shipment
     async def delete(self, id: UUID) -> None:

@@ -51,7 +51,7 @@ class Shipment (SQLModel, table =True):
         sa_relationship_kwargs={"lazy":"selectin"}
     )
     client_contact_email :EmailStr | None
-    client_contact_phone: int | None
+    client_contact_phone: str | None
     
     @property
     def status(self):

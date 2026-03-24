@@ -1,9 +1,11 @@
 from functools import cache
+from random import randint
 
 from app.database.models import Shipment, ShipmentEvent, ShipmentStatus
+from app.database.redis import add_shipment_verification_code
 from app.services.base import BaseService
 from app.services.notification import NotificationService
-
+from app.config import db_settings
 
 class ShipmentEventService(BaseService):
     def __init__(self,session ,tasks):
@@ -18,7 +20,7 @@ class ShipmentEventService(BaseService):
         status:ShipmentStatus =None,
         description:str =None
     ) -> ShipmentEvent:
-        
+        print("!!! EVENT SERVICE ADD CALLED !!!")
         if not location or not status:
         # If there's no timeline or it's empty, we can't get a 'last_event'
             if not shipment.timeline or len(shipment.timeline) == 0:
@@ -91,6 +93,25 @@ class ShipmentEventService(BaseService):
             case ShipmentStatus.out_for_delivery:
                 subject="Your Order is Arriving Soon 🛵"
                 template_name = "mail_out_for_delivery.html"
+                # ... inside Case ShipmentStatus.out_for_delivery ...
+
+                code = randint(100000, 999999)
+                print(f"DEBUG: Saving code {code} to Redis")
+
+                # 1. Save to Redis (This happens first)
+                await add_shipment_verification_code(shipment.id, code)
+
+                # 2. Trigger SMS (Now non-blocking)
+                if shipment.client_contact_phone:
+                    # REMOVE 'await' from this line:
+                    self.notification_service.send_sms(
+                        to=shipment.client_contact_phone,
+                        body=f"Your order is arriving soon! share this {code} with your delivery excutive"
+                    )
+                else:
+                    context["verification_code"] = code
+                
+                    
                 
             case ShipmentStatus.delivered:
                 subject = "Your Order is Delivered ✅"
