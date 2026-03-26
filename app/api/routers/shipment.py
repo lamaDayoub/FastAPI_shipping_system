@@ -1,15 +1,16 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.api.dependencies import DeleviryPartnerDep, DeliveryPartnerServiceDep, ServiceDep
 
 from app.api.schemas import shipment
-from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentUpdate
+from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentReview, ShipmentUpdate
 from app.api.dependencies import sellerDep
 from app.utils import TEMPLATE_DIR
-
+from app.config import app_settings
 router = APIRouter(prefix='/shipment', tags=['Shipment'])
 templates = Jinja2Templates(TEMPLATE_DIR)
 
@@ -84,3 +85,24 @@ async def cancel_shipment(
     return await service.cancel(id, seller)
     
     
+@router.get('/review')
+async def submit_review(request : Request, token:str):
+        
+    return templates.TemplateResponse(
+        request = request ,
+        name= "review.html",
+        context ={
+            "review_url":f"http://{app_settings.APP_DOMAIN}/shipment/review?token={token}"
+        }
+        
+    )
+    
+@router.post('/review')
+async def submit_review(
+    token:str,
+    rating:Annotated[int,Form( ge = 1 , le = 5 )],
+    service:ServiceDep,
+    comment: Annotated[str | None, Form()] = None,
+):
+    await service.rate(token, rating, comment)
+    return{"detail": "review submitted "}

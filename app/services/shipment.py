@@ -6,12 +6,13 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
-from app.database.models import DeliveryPartner, Seller, Shipment, ShipmentStatus
+from app.api.schemas.shipment import ShipmentCreate, ShipmentReview, ShipmentUpdate
+from app.database.models import DeliveryPartner, Review, Seller, Shipment, ShipmentStatus
 from app.database.redis import get_shipment_verification_code
 from app.services.base import BaseService
 from app.services.delivery_partner import DeliveryPartnerService
 from app.services.shipment_event import ShipmentEventService
+from app.utils import decode_url_safe_token
 
 class ShipmentService(BaseService):
     def __init__(
@@ -64,6 +65,7 @@ class ShipmentService(BaseService):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='The shipment with the provided ID does not exist'
             )
+            
 
         # 2. Authorization: Check if this partner owns this shipment
         if shipment.delivery_partner_id != partner.id:
@@ -123,5 +125,23 @@ class ShipmentService(BaseService):
         )
         shipment.timeline.append(event)
         return shipment
+    
+    
+    async def rate(self,token:str, rating: int, comment: str):
+        token_data = decode_url_safe_token(token)
+        if not token_data:
+            raise HTTPException(
+                status_code = status.HTTP_401_UNAUTHORIZED,
+                detail="not authorized"
+            )
+        shipment= await self.get(UUID(token_data["id"]))
+        new_review = Review(
+            rating = rating,
+            comment = comment if comment else None,
+            shipment_id = shipment.id
+        )
+        self.session.add(new_review)
+        self.session.commit()
+        
         
         
