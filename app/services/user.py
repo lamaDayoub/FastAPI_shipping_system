@@ -1,16 +1,16 @@
 from datetime import timedelta
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import  HTTPException, status
 from sqlmodel import select
 from app.database.models import User
 from app.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.notification import NotificationService
 from app.utils import generate_access_token, generate_url_safe_token
 from passlib.context import CryptContext
 from app.config import app_settings
 from app.utils import decode_url_safe_token
+from app.worker.tasks import send_email_with_template
 
 password_context = CryptContext(
     schemes=['bcrypt']
@@ -18,9 +18,9 @@ password_context = CryptContext(
 
 
 class UserService(BaseService):
-    def __init__(self, model: User , session: AsyncSession, tasks:BackgroundTasks):
+    def __init__(self, model: User , session: AsyncSession):
         super().__init__(model, session)
-        self.notification_service = NotificationService(tasks)
+        
         
     async def _add_user(self, data:dict, router_prefix: str)-> User:
         user_data = data.model_dump(exclude={'password'})
@@ -33,7 +33,7 @@ class UserService(BaseService):
             "email":user.email,
             "id":str(user.id)
         })
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[user.email],
             subject="Verify your Account with FastShip",
             context = {
@@ -96,7 +96,7 @@ class UserService(BaseService):
             },
             salt = "password-reset"
         )
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[user.email],
             subject = "Fastship Account Password Reset",
             context={

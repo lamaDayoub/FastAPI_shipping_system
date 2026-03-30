@@ -1,6 +1,6 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import BackgroundTasks, Depends, HTTPException, status
+from fastapi import  Depends, HTTPException, status
 from app.database.models import Seller,DeliveryPartner
 from app.database.redis import is_jti_blacklisted
 from app.database.session import get_session
@@ -15,17 +15,17 @@ from app.utils import decode_access_token
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
-def get_shipment_service(session : SessionDep, tasks: BackgroundTasks):
+def get_shipment_service(session : SessionDep):
     return ShipmentService(
         session,
-        DeliveryPartnerService(session,tasks),
-        ShipmentEventService(session, tasks)
+        DeliveryPartnerService(session),
+        ShipmentEventService(session)
     )
 
 ServiceDep = Annotated[ShipmentService, Depends(get_shipment_service)]
 
-def get_seller_service(session: SessionDep, tasks:BackgroundTasks):
-    return SellerService(session, tasks)
+def get_seller_service(session: SessionDep):
+    return SellerService(session)
 
 SellerServiceDep = Annotated[ SellerService, Depends(get_seller_service)]
 
@@ -69,8 +69,8 @@ async def get_current_partner(token : Annotated[str,Depends(get_partner_access_t
 DeleviryPartnerDep = Annotated[DeliveryPartner,Depends(get_current_partner)]
 
 
-def get_delivery_partner_service(session:SessionDep, tasks:BackgroundTasks):
-    return DeliveryPartnerService(session, tasks)
+def get_delivery_partner_service(session:SessionDep):
+    return DeliveryPartnerService(session)
 
 DeliveryPartnerServiceDep = Annotated[
     DeliveryPartnerService,

@@ -27,7 +27,11 @@ class DataBaseSettings(BaseSettings):
         # Format: postgresql+asyncpg://user:password@server:port/db
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
-
+    
+    def REDIS_URL(self, db:int):
+        return f'redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{db}'
+    
+    
 class SecuritySettings(BaseSettings):
     JWT_SECRET_KEY:str
     JWT_ALGORITHM:str

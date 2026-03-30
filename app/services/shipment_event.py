@@ -1,17 +1,15 @@
-from functools import cache
 from random import randint
 
 from app.database.models import Shipment, ShipmentEvent, ShipmentStatus
 from app.database.redis import add_shipment_verification_code
 from app.services.base import BaseService
-from app.services.notification import NotificationService
-from app.config import db_settings, app_settings
+from app.config import  app_settings
 from app.utils import generate_url_safe_token
+from app.worker.tasks import send_email_with_template, send_sms
 
 class ShipmentEventService(BaseService):
-    def __init__(self,session ,tasks):
+    def __init__(self,session ):
         super().__init__(ShipmentEvent, session)
-        self.notification_service = NotificationService(tasks)
         
         
     async def add(
@@ -105,7 +103,7 @@ class ShipmentEventService(BaseService):
                 # 2. Trigger SMS (Now non-blocking)
                 if shipment.client_contact_phone:
                     # REMOVE 'await' from this line:
-                    self.notification_service.send_sms(
+                    send_sms.delay(
                         to=shipment.client_contact_phone,
                         body=f"Your order is arriving soon! share this {code} with your delivery excutive"
                     )
@@ -121,11 +119,11 @@ class ShipmentEventService(BaseService):
                 context["review_url"]=f"http://{app_settings.APP_DOMAIN}/shipment/review?token={token}"
                 template_name = "mail_delivered.html"
 
-            case ShipmentStatus.cancelled:
-                subject = "Your Order is Cancelled ❌"
+            case ShipmentStatus.cancled:
+                subject = "Your Order is cancled ❌"
                 template_name = "mail_cancelled.html"
 
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[shipment.client_contact_email],
             subject=subject,
             context=context,

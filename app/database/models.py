@@ -147,7 +147,7 @@ class DeliveryPartner(User, table= True):
         return [
             shipment 
             for shipment in shipments_list
-            if shipment.status != ShipmentStatus.delivered or shipment.status != ShipmentStatus.cancled 
+            if shipment.status != ShipmentStatus.delivered and shipment.status != ShipmentStatus.cancled 
         ]
     @property  
     def current_handling_capacity(self):

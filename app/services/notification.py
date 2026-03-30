@@ -8,8 +8,7 @@ from app.config import notification_settings
 
 from app.utils import TEMPLATE_DIR
 from twilio.rest import Client
-from twilio.http.async_http_client import AsyncHttpClient
-import logging
+
 
 
 class NotificationService:
