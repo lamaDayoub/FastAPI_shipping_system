@@ -9,6 +9,7 @@ from app.api.dependencies import DeleviryPartnerDep, DeliveryPartnerServiceDep, 
 from app.api.schemas import shipment
 from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentReview, ShipmentUpdate
 from app.api.dependencies import sellerDep
+from app.database.models import TagName
 from app.utils import TEMPLATE_DIR
 from app.config import app_settings
 router = APIRouter(prefix='/shipment', tags=['Shipment'])
@@ -68,6 +69,23 @@ async def update_shipment(
     updated_ship= await service.update(id, updated_shipment, partner )
     return updated_ship
 
+
+@router.get('/tag', response_model=Shipment)
+async def add_tag_to_shipment(
+    id:UUID,
+    tag_name:TagName,
+    service: ServiceDep
+):
+    return await service.add_tag(id, tag_name)
+    
+@router.delete('/tag', response_model=Shipment)
+async def remove_tag_from_shipment(
+    id:UUID,
+    tag_name:TagName,
+    service: ServiceDep
+):
+    return await service.remove_tag(id, tag_name)
+    
 
 ### Delete a shipment by id
 @router.get("/cancel", response_model =Shipment)

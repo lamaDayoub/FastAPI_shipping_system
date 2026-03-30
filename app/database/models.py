@@ -1,6 +1,7 @@
 from dataclasses import field
 from datetime import datetime
 from enum import Enum
+from os import link
 from typing import List
 from pydantic import EmailStr
 from sqlalchemy import Column
@@ -8,12 +9,45 @@ from sqlmodel import Relationship, SQLModel,Field
 from uuid import uuid4,UUID
 from sqlalchemy.dialects import postgresql  
 from sqlalchemy import ARRAY, INTEGER
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
+
+
 class ShipmentStatus(str, Enum):
     placed = "placed"
     in_transit = "in_transit"
     out_for_delivery = "out_for_delivery"
     delivered = "delivered"
     cancled ="cancled"
+
+class TagName(str, Enum):
+    EXPRESS = "express"
+    STANDARD = "standard"
+    FRAGILE = "fragile"
+    HEAVY = "heavy"
+    INTERNATIONAL = "international"
+    DOMESTIC = "domestic"
+    TEMPERATURE_CONTROLLED = "temperature_controlled"
+    GIFT = "gift"
+    RETURN = "return"
+    DOCUMENTS = "documents"
+    
+    async def tag(self , session: AsyncSession):
+        return await session.scalar(
+            select(Tag).where(Tag.name == self.value)
+        )
+        
+
+class ShipmentTag(SQLModel, table = True):
+    __tablename__ = "shipment_tag"
+    shipment_id: UUID = Field(
+        foreign_key="shipment.id", 
+        primary_key=True
+    )
+    tag_id: UUID = Field(
+        foreign_key="tag.id",
+        primary_key=True
+    )
 
 class Shipment (SQLModel, table =True): 
     __tablename__='shipment'
@@ -56,6 +90,11 @@ class Shipment (SQLModel, table =True):
         back_populates="shipment",
         sa_relationship_kwargs={"lazy":"selectin"}
     )
+    tags: list["Tag"] = Relationship(
+        back_populates="shipments",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
     @property
     def status(self):
         if not self.timeline:
@@ -64,7 +103,25 @@ class Shipment (SQLModel, table =True):
         sorted_timeline = sorted(self.timeline, key=lambda event: event.created_at)
         return sorted_timeline[-1].status
     
+class Tag(SQLModel, table=True):
+    __tablename__ = "tag"
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            default=uuid4,
+            primary_key=True,
+        )
+    )
+    name: TagName
+    instruction: str
+    shipments : list[Shipment] = Relationship(
+        back_populates="tags",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
        
+
+     
 class ShipmentEvent(SQLModel, table = True):
     __tablename__='shipments_event'
     id: UUID = Field(

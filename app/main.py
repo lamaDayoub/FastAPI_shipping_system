@@ -1,9 +1,12 @@
 
+from datetime import datetime
+
 from fastapi import  FastAPI
 from scalar_fastapi import get_scalar_api_reference
 from contextlib import asynccontextmanager
 from app.database.session import create_db_tables
 from app.api.router import master_router
+from app.worker.tasks import background_task
 
 @asynccontextmanager
 async def lifespan_handler(app:FastAPI):
@@ -26,10 +29,18 @@ def get_scalar_docs():
         title="Scalar API",
     )
 
-
-
-
-
+@app.get("/test")
+def test():
+    now = datetime.now()
+    background_task.delay(
+        f'background_task  {now.second}',
+        data ={
+            "min":now.minute,
+            "sec":now.second
+            
+        }
+    )
+  
 
 
 

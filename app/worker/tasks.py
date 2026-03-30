@@ -1,3 +1,5 @@
+from time import sleep
+
 from asgiref.sync import async_to_sync
 from celery import Celery
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
@@ -21,7 +23,8 @@ twilio_client = Client(
 app = Celery(
     "api_tasks",
     broker = db_settings.REDIS_URL(9),
-    backend = db_settings.REDIS_URL(9)
+    backend = db_settings.REDIS_URL(9),
+    broker_connection_retry_on_startup=True
 )
 
 send_message = async_to_sync(fast_mail.send_message)
@@ -79,3 +82,9 @@ def send_sms( to: str, body: str):
     except Exception as e:
         # We use str(e) to see the message without the full HTTP dump
         return f"TWILIO LOG: Could not send SMS to {to}. Reason: {str(e)}"
+    
+@app.task
+def background_task(name:str, data:dict):
+    sleep(5)
+    return name
+    
