@@ -1,6 +1,7 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import  Depends, HTTPException, status
+from fastapi import  Depends
+from app.core.exceptions import ClientNotAuthorized, InvalidToken
 from app.database.models import Seller,DeliveryPartner
 from app.database.redis import is_jti_blacklisted
 from app.database.session import get_session
@@ -33,7 +34,7 @@ SellerServiceDep = Annotated[ SellerService, Depends(get_seller_service)]
 async def _get_access_token(token:str)->dict:
     data= decode_access_token(token)
     if data is None or await is_jti_blacklisted(data["jti"]) :
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid  or expired access token')
+        raise InvalidToken()
     return data
 
 async def get_seller_access_token(token: Annotated[str,Depends(oauth2_scheme_seller)])->dict:
@@ -45,7 +46,7 @@ async def get_current_seller(token : Annotated[str,Depends(get_seller_access_tok
 ):
     seller = await session.get(Seller,UUID(token['user']['id']))
     if seller is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='not authorized')
+        raise ClientNotAuthorized()
     
     return seller
 
@@ -62,7 +63,7 @@ async def get_current_partner(token : Annotated[str,Depends(get_partner_access_t
 ):
     partner =  await session.get(DeliveryPartner,UUID(token['user']['id']))
     if partner is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='not authorized')
+        raise ClientNotAuthorized()
     
     return partner
 

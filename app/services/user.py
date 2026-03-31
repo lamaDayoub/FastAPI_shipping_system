@@ -1,8 +1,9 @@
 from datetime import timedelta
 from uuid import UUID
 
-from fastapi import  HTTPException, status
+
 from sqlmodel import select
+from app.core.exceptions import BadCredentials, ClientNotVerified, InvalidToken
 from app.database.models import User
 from app.services.base import BaseService
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,19 +56,16 @@ class UserService(BaseService):
         user = await self._get_by_email(email)
         
         if  user  is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='user with given email is not found ')
+            raise BadCredentials()
         
         true_password = password_context.verify(
             password,
             user.password_hash
         )
         if not true_password:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='invalid password')
+            raise BadCredentials()
         if not user.email_verified:
-            raise HTTPException(
-                status_code = status.HTTP_401_UNAUTHORIZED,
-                detail ="Email not verified"
-            )
+            raise ClientNotVerified()
         return generate_access_token(
             data={
                 "user":{
@@ -79,10 +77,7 @@ class UserService(BaseService):
     async def verify_email(self, token: str):
         token_data= decode_url_safe_token(token)
         if not token_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token"
-            )
+            raise InvalidToken()
         user = await self._get(UUID(token_data["id"]))
         user.email_verified = True
         await self._update(user)

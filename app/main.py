@@ -1,9 +1,11 @@
 
 from datetime import datetime
 
-from fastapi import  FastAPI
+from fastapi import  FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from scalar_fastapi import get_scalar_api_reference
 from contextlib import asynccontextmanager
+from app.core.exceptions import InvalidToken, add_exception_handlers
 from app.database.session import create_db_tables
 from app.api.router import master_router
 from app.worker.tasks import background_task
@@ -16,7 +18,7 @@ async def lifespan_handler(app:FastAPI):
     
 
 app = FastAPI(lifespan=lifespan_handler)
-
+add_exception_handlers(app)
 app.include_router(master_router)
 # db=Database()
 
@@ -41,6 +43,7 @@ def test():
         }
     )
   
+
 
 
 

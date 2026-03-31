@@ -1,8 +1,9 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException,status
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.dependencies import   DeliveryPartnerServiceDep, get_partner_access_token,DeleviryPartnerDep
 from app.api.schemas.delivery_partner import DeliveryPartnerRead, DeliveryPartnerCreate, DeliveryPartnerUpdate
+from app.core.exceptions import NothingToUpdate
 from app.database.redis import add_jti_to_blacklist
 
 
@@ -45,10 +46,7 @@ async def update_delivery_partner(
     update = partner_update.model_dump(exclude_none=True)
 
     if not update:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No data provided to update",
-        )
+        raise NothingToUpdate()
 
     # return await service.update(
     #     partner.sqlmodel_update(update),

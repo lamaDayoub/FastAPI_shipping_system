@@ -3,6 +3,7 @@
 from sqlmodel import Sequence, any_, select
 from fastapi import HTTPException,status
 from app.api.schemas.delivery_partner import DeliveryPartnerCreate
+from app.core.exceptions import DeliveryPartnerNotAvailable
 from app.database.models import DeliveryPartner, Shipment
 from app.services.user import UserService
 
@@ -36,10 +37,7 @@ class DeliveryPartnerService(UserService):
                 partner.shipments.append(shipment)
                 await self.update(partner)
                 return partner
-        raise HTTPException(
-            status_code = status.HTTP_406_NOT_ACCEPTABLE, # ERROR
-            detail="No delivery partner available"
-        )
+        raise DeliveryPartnerNotAvailable()
                 
             
         

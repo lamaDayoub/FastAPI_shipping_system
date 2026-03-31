@@ -1,32 +1,31 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from app.api.dependencies import DeleviryPartnerDep, DeliveryPartnerServiceDep, ServiceDep
+from fastapi import APIRouter, Form, Request
 
-from app.api.schemas import shipment
-from app.api.schemas.shipment import Shipment, ShipmentCreate, ShipmentReview, ShipmentUpdate
+from fastapi.templating import Jinja2Templates
+from app.api.dependencies import DeleviryPartnerDep,  ServiceDep, SessionDep
+
+
+from app.api.schemas.shipment import Shipment, ShipmentCreate,  ShipmentUpdate
 from app.api.dependencies import sellerDep
+from app.core.exceptions import NothingToUpdate
 from app.database.models import TagName
 from app.utils import TEMPLATE_DIR
 from app.config import app_settings
+
+
 router = APIRouter(prefix='/shipment', tags=['Shipment'])
 templates = Jinja2Templates(TEMPLATE_DIR)
 
 ###  a shipment by id add:, _:sellerDep
 @router.get("/", response_model=Shipment)
 async def get_shipment(id: UUID, _:sellerDep, service : ServiceDep):
-    # Check for shipment with given id
-    shipment= await service.get(id)
-    if shipment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Given id doesn't exist!",
-        )
+    
+    return await service.get(id)
+    
 
-    return shipment
+    
 
 #TRACKING DETAILS OF A SHIPMENT
 @router.get("/track")
@@ -62,10 +61,7 @@ async def update_shipment(
    
     updating = updated_shipment.model_dump(exclude_none = True)
     if not updating:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='No Data provided to update'
-        )
+        raise NothingToUpdate()
     updated_ship= await service.update(id, updated_shipment, partner )
     return updated_ship
 
@@ -76,6 +72,7 @@ async def add_tag_to_shipment(
     tag_name:TagName,
     service: ServiceDep
 ):
+    return {}
     return await service.add_tag(id, tag_name)
     
 @router.delete('/tag', response_model=Shipment)
@@ -95,11 +92,7 @@ async def cancel_shipment(
     service : ServiceDep
 ) -> dict[str, str]:
     shipment=await service.get(id)
-    if shipment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail= 'the shipment with the provided id is not exist'
-        )
+    
     return await service.cancel(id, seller)
     
     
@@ -124,3 +117,11 @@ async def submit_review(
 ):
     await service.rate(token, rating, comment)
     return{"detail": "review submitted "}
+
+@router.get('tagged', response_model=list[Shipment])
+async def get_shipments_with_tag(
+    tag_name:TagName,
+    session:SessionDep
+):
+    tag = await tag_name.tag(session)
+    return tag.shipments if tag else []
