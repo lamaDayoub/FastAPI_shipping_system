@@ -1,25 +1,44 @@
-
 from datetime import datetime
+from time import perf_counter
 
-from fastapi import  FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
+
+from h11 import Response
 from scalar_fastapi import get_scalar_api_reference
 from contextlib import asynccontextmanager
-from app.core.exceptions import InvalidToken, add_exception_handlers
+from app.core.exceptions import add_exception_handlers
 from app.database.session import create_db_tables
 from app.api.router import master_router
-from app.worker.tasks import background_task
+from app.worker.tasks import add_log, background_task
+
 
 @asynccontextmanager
-async def lifespan_handler(app:FastAPI):
+async def lifespan_handler(app: FastAPI):
     await create_db_tables()
     yield
-    
-    
+
 
 app = FastAPI(lifespan=lifespan_handler)
 add_exception_handlers(app)
 app.include_router(master_router)
+
+
+@app.middleware("http")
+async def custom_middleware(request: Request, call_next):
+    start = perf_counter()
+
+    response: Response = await call_next(request)
+
+    end = perf_counter()
+    time_taken = round(end - start, 2)
+
+    add_log.delay(
+        f"{request.method} {request.url} ({response.status_code}) {time_taken} s"
+    )
+
+    return response
+
+
 # db=Database()
 
 
@@ -31,58 +50,13 @@ def get_scalar_docs():
         title="Scalar API",
     )
 
+
 @app.get("/test")
 def test():
     now = datetime.now()
     background_task.delay(
-        f'background_task  {now.second}',
-        data ={
-            "min":now.minute,
-            "sec":now.second
-            
-        }
+        f"background_task  {now.second}", data={"min": now.minute, "sec": now.second}
     )
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # from typing import Callable,Any
@@ -102,12 +76,9 @@ def test():
 # request:str=""
 # while request!='quit':
 #     request =input('>  ')
-    
+
 #     if request in routes:
 #         response=routes[request]()
 #         print(response,end='\n\n')
 #     else:
 #         print('not found')
-        
-
-    

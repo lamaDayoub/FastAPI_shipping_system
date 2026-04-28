@@ -11,9 +11,9 @@ from twilio.rest import Client
 fast_mail = FastMail(
     ConnectionConfig(
         **notification_settings.model_dump(
-            exclude=["TWILIO_SID","TWILIO_AUTH_TOKEN","TWILIO_NUMBER"]
+            exclude=["TWILIO_SID", "TWILIO_AUTH_TOKEN", "TWILIO_NUMBER"]
         ),
-        TEMPLATE_FOLDER=TEMPLATE_DIR
+        TEMPLATE_FOLDER=TEMPLATE_DIR,
     )
 )
 twilio_client = Client(
@@ -22,69 +22,66 @@ twilio_client = Client(
 )
 app = Celery(
     "api_tasks",
-    broker = db_settings.REDIS_URL(9),
-    backend = db_settings.REDIS_URL(9),
-    broker_connection_retry_on_startup=True
+    broker=db_settings.REDIS_URL(9),
+    backend=db_settings.REDIS_URL(9),
+    broker_connection_retry_on_startup=True,
 )
 
 send_message = async_to_sync(fast_mail.send_message)
 
+
 @app.task
-def send_mail(
-    recipients : list[str],
-    subject  :str,
-    body: str
-):
+def send_mail(recipients: list[str], subject: str, body: str):
     print(f"DEBUG: Attempting to send email to {recipients}")
     send_message(
         MessageSchema(
-            recipients =recipients,
-            subject  = subject,
-            body = body,
+            recipients=recipients,
+            subject=subject,
+            body=body,
             subtype=MessageType.plain,
         ),
     )
     return "Message sent!"
 
 
-
 @app.task
 def send_email_with_template(
-        recipients:list[EmailStr],
-        subject:str,
-        context:dict|None,
-        template_name: str
+    recipients: list[EmailStr], subject: str, context: dict | None, template_name: str
 ):
     print(f"DEBUG: Attempting to send email to {recipients}")
     send_message(
         MessageSchema(
-            recipients= recipients,
-            subject = subject,
-            template_body= context,
-            subtype =MessageType.html
+            recipients=recipients,
+            subject=subject,
+            template_body=context,
+            subtype=MessageType.html,
         ),
-        template_name = template_name
+        template_name=template_name,
     )
     return f"Template mail {template_name} sent!"
-            
-        
+
+
 @app.task
-def send_sms( to: str, body: str):
+def send_sms(to: str, body: str):
     try:
-       
         twilio_client.messages.create(
-            from_=notification_settings.TWILIO_NUMBER,
-            to=to,
-            body=body
+            from_=notification_settings.TWILIO_NUMBER, to=to, body=body
         )
         return f"SMS successfully sent to {to}"
-            
+
     except Exception as e:
         # We use str(e) to see the message without the full HTTP dump
         return f"TWILIO LOG: Could not send SMS to {to}. Reason: {str(e)}"
-    
+
+
 @app.task
-def background_task(name:str, data:dict):
+def background_task(name: str, data: dict):
     sleep(5)
     return name
-    
+
+
+@app.task
+def add_log(log: str) -> None:
+
+    with open("file.log", "a") as file:
+        file.write(f"{log}\n")
