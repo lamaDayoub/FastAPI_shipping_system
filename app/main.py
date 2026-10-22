@@ -1,8 +1,8 @@
 from datetime import datetime
 from time import perf_counter
-
+from fastapi.routing import APIRoute
 from fastapi import FastAPI, Request
-
+from fastapi.middleware.cors import CORSMiddleware
 from h11 import Response
 from scalar_fastapi import get_scalar_api_reference
 from contextlib import asynccontextmanager
@@ -18,7 +18,25 @@ async def lifespan_handler(app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan_handler)
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return route.name
+
+
+origins = [
+    "http://localhost:5173",  # React Vite frontend
+    "http://127.0.0.1:5173",
+]
+
+app = FastAPI(
+    lifespan=lifespan_handler, generate_unique_id_function=custom_generate_unique_id
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],  # Allows Authorization headers, Content-Type, etc.
+)
 add_exception_handlers(app)
 app.include_router(master_router)
 
