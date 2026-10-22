@@ -1,4 +1,4 @@
-// app/lib/api.ts
+
 import { API } from "./client";
 
 const api = new API({
