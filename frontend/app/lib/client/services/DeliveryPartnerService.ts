@@ -6,6 +6,7 @@ import type { Body_login_delivery_partner } from '../models/Body_login_delivery_
 import type { DeliveryPartnerCreate } from '../models/DeliveryPartnerCreate';
 import type { DeliveryPartnerRead } from '../models/DeliveryPartnerRead';
 import type { DeliveryPartnerUpdate } from '../models/DeliveryPartnerUpdate';
+import type { Shipment } from '../models/Shipment';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -96,6 +97,17 @@ export class DeliveryPartnerService {
             errors: {
                 422: `Validation Error`,
             },
+        });
+    }
+    /**
+     * Get Partner Shipments
+     * @returns Shipment Successful Response
+     * @throws ApiError
+     */
+    public static getPartnerShipments(): CancelablePromise<Array<Shipment>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/partner/shipments',
         });
     }
 }

@@ -13,6 +13,8 @@ from app.database.redis import add_jti_to_blacklist
 from app.utils import TEMPLATE_DIR
 
 from app.config import app_settings
+from app.api.schemas.shipment import Shipment as ShipmentSchema
+from app.api.dependencies import sellerDep
 
 router = APIRouter(prefix="/seller", tags=["Seller"])
 
@@ -84,3 +86,8 @@ async def reset_password(
 @router.get("/me", response_model=SellerRead)
 def get_seller_me(seller: SellerServiceDep):
     return seller
+
+
+@router.get("/shipments", response_model=list[ShipmentSchema])
+async def get_seller_shipments(seller: sellerDep):
+    return seller.shipments

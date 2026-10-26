@@ -6,6 +6,7 @@ import type { Body_login_seller } from '../models/Body_login_seller';
 import type { Body_reset_password } from '../models/Body_reset_password';
 import type { SellerCreate } from '../models/SellerCreate';
 import type { SellerRead } from '../models/SellerRead';
+import type { Shipment } from '../models/Shipment';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -161,6 +162,17 @@ export class SellerService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/seller/me',
+        });
+    }
+    /**
+     * Get Seller Shipments
+     * @returns Shipment Successful Response
+     * @throws ApiError
+     */
+    public static getSellerShipments(): CancelablePromise<Array<Shipment>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/seller/shipments',
         });
     }
 }

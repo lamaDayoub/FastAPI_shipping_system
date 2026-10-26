@@ -44,10 +44,10 @@ export default function Home() {
         {/* Welcome Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Welcome Portal
+            Welcome
           </h1>
           <p className="text-sm text-slate-500">
-            Select your account type below to log in to your portal.
+            Select your account type below to log in.
           </p>
         </div>
 

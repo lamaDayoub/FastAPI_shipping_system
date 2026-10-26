@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Route } from "./+types/root";
 import "./app.css";
 import { AuthContext, AuthProvider } from "./contexts/AuthContext";
@@ -45,7 +45,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <AuthProvider> <Outlet /> </AuthProvider>;
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <Outlet />
+      </QueryClientProvider>
+    </AuthProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
