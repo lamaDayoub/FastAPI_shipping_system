@@ -141,7 +141,7 @@ export default function DashboardPage() {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
   if (!token) {
-    return <Navigate to="/login" />
+    return <Navigate to="/" />
   }
 
   return (

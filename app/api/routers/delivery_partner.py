@@ -76,3 +76,8 @@ async def verify_partner_email(token: str, service: DeliveryPartnerServiceDep):
 @router.get("/shipments", response_model=list[ShipmentSchema])
 async def get_partner_shipments(partner: DeleviryPartnerDep):
     return partner.shipments
+
+
+@router.get("/me", response_model=DeliveryPartnerRead)
+async def get_delivery_partner_me(partner: DeleviryPartnerDep):
+    return partner

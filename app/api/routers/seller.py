@@ -1,5 +1,5 @@
 from typing import Annotated
-
+from fastapi import HTTPException
 from fastapi import APIRouter, Depends, Form, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
@@ -84,8 +84,14 @@ async def reset_password(
 
 
 @router.get("/me", response_model=SellerRead)
-def get_seller_me(seller: SellerServiceDep):
-    return seller
+async def get_seller_me(seller: sellerDep):
+    try:
+        # Force print to inspect the seller object in your backend terminal
+        print("RETRIEVING SELLER:", seller.name, seller.email)
+        return seller
+    except Exception as e:
+        print("CRASH IN /me:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/shipments", response_model=list[ShipmentSchema])

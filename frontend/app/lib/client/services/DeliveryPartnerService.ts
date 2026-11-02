@@ -110,4 +110,15 @@ export class DeliveryPartnerService {
             url: '/partner/shipments',
         });
     }
+    /**
+     * Get Delivery Partner Me
+     * @returns DeliveryPartnerRead Successful Response
+     * @throws ApiError
+     */
+    public static getDeliveryPartnerMe(): CancelablePromise<DeliveryPartnerRead> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/partner/me',
+        });
+    }
 }
