@@ -9,4 +9,6 @@ export default [
     route("/partner/login", "routes/partner/login.tsx"),
     route("/dashboard", "routes/dashboard.tsx"),
     route("/account", "routes/account.tsx"),
+    route("/update-shipment", "routes/partner/update-shipment.tsx"),
+
 ] satisfies RouteConfig;
